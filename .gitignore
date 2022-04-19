@@ -21,3 +21,11 @@ yarn-error.log*
 server/.env
 client/cypress/videos
 client/cypress/screenshots
+client/.idea/.gitignore
+client/.idea/client.iml
+client/.idea/modules.xml
+client/.idea/vcs.xml
+server/.idea/.gitignore
+server/.idea/modules.xml
+server/.idea/server.iml
+server/.idea/vcs.xml
