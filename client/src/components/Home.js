@@ -111,7 +111,7 @@ const Home = ({user, logout}) => {
           convo.latestMessageText = message.text;
         }
       });
-      // create a new convo object array to replace the old one
+      // create a new conversations object array to replace the old one
       let newConversations = [...conversations];
       setConversations(newConversations);
     },
