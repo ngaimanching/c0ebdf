@@ -104,6 +104,7 @@ const styles = {
     background: "#FFFFFF",
     boxShadow: "0px 2px 12px rgba(74, 106, 149, 0.2)",
     color: "#3A8DFF",
+    textTransform: 'none',
   },
   createText: {
     position: 'absolute',
