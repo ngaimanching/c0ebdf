@@ -78,17 +78,27 @@ const Home = ({user, logout}) => {
     }
   };
 
-  const addNewConvo = useCallback(
-    (recipientId, message) => {
-      conversations.forEach((convo) => {
-        if (convo.otherUser.id === recipientId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
-          convo.id = message.conversationId;
+  const sortConversations = (conversations) => {
+    return conversations.sort((a, b) => {
+      const msg1 = a.messages[a.messages.length - 1];
+      const msg2 = b.messages[b.messages.length - 1];
+      return new Date(msg2.createdAt) - new Date(msg1.createdAt);
+    })
+  };
+
+  const addNewConvo = useCallback((recipientId, message) => {
+      let newCconversations = conversations.map((convo) => {
+        const convoCopy = {...convo, messages: [...convo.messages]};
+        if (convoCopy.otherUser.id === recipientId) {
+          convoCopy.messages.push(message);
+          convoCopy.latestMessageText = message.text;
+          convoCopy.id = message.conversationId;
         }
+        return convoCopy
       });
-      let newConversations = [...conversations];
-      setConversations(newConversations);
+      // sort conversations by latest message
+      newCconversations = sortConversations(newCconversations);
+      setConversations(newCconversations);
     },
     [setConversations, conversations],
   );
@@ -104,15 +114,16 @@ const Home = ({user, logout}) => {
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
       }
-
-      conversations.forEach((convo) => {
-        if (convo.id === message.conversationId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
+      let newConversations = conversations.map((convo) => {
+        const convoCopy = {...convo, messages: [...convo.messages]};
+        if (convoCopy.id === message.conversationId) {
+          convoCopy.messages.push(message);
+          convoCopy.latestMessageText = message.text;
         }
-      });
-      // create a new convo object array to replace the old one
-      let newConversations = [...conversations];
+        return convoCopy;
+      })
+      // sort conversations by latest message
+      newConversations = sortConversations(newConversations);
       setConversations(newConversations);
     },
     [setConversations, conversations],
@@ -184,9 +195,7 @@ const Home = ({user, logout}) => {
     const fetchConversations = async () => {
       try {
         const {data} = await axios.get("/api/conversations");
-        data.forEach(e => {
-          e.messages.sort((a, b) => moment(a.createdAt) - moment(b.createdAt));
-        })
+        data.forEach(e => e.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
         setConversations(data);
       } catch (error) {
         console.error(error);
