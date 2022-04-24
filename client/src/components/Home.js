@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useState, useContext } from "react";
+import React, {useCallback, useEffect, useState, useContext} from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
-import { Grid, CssBaseline, Button } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
+import moment from "moment";
+import {useHistory} from "react-router-dom";
+import {Grid, CssBaseline, Button} from "@material-ui/core";
+import {makeStyles} from "@material-ui/core/styles";
 
-import { SidebarContainer } from "../components/Sidebar";
-import { ActiveChat } from "../components/ActiveChat";
-import { SocketContext } from "../context/socket";
+import {SidebarContainer} from "../components/Sidebar";
+import {ActiveChat} from "../components/ActiveChat";
+import {SocketContext} from "../context/socket";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -14,7 +15,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Home = ({ user, logout }) => {
+const Home = ({user, logout}) => {
   const history = useHistory();
 
   const socket = useContext(SocketContext);
@@ -37,7 +38,7 @@ const Home = ({ user, logout }) => {
     users.forEach((user) => {
       // only create a fake convo if we don't already have a convo with this user
       if (!currentUsers[user.id]) {
-        let fakeConvo = { otherUser: user, messages: [] };
+        let fakeConvo = {otherUser: user, messages: []};
         newState.push(fakeConvo);
       }
     });
@@ -50,7 +51,7 @@ const Home = ({ user, logout }) => {
   };
 
   const saveMessage = async (body) => {
-    const { data } = await axios.post("/api/messages", body);
+    const {data} = await axios.post("/api/messages", body);
     return data;
   };
 
@@ -62,10 +63,9 @@ const Home = ({ user, logout }) => {
     });
   };
 
-  const postMessage = (body) => {
+  const postMessage = async (body) => {
     try {
-      const data = saveMessage(body);
-
+      const data = await saveMessage(body);
       if (!body.conversationId) {
         addNewConvo(body.recipientId, data.message);
       } else {
@@ -78,23 +78,33 @@ const Home = ({ user, logout }) => {
     }
   };
 
-  const addNewConvo = useCallback(
-    (recipientId, message) => {
-      conversations.forEach((convo) => {
-        if (convo.otherUser.id === recipientId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
-          convo.id = message.conversationId;
+  const sortConversations = (conversations) => {
+    return conversations.sort((a, b) => {
+      const msg1 = a.messages[a.messages.length - 1];
+      const msg2 = b.messages[b.messages.length - 1];
+      return new Date(msg2.createdAt) - new Date(msg1.createdAt);
+    })
+  };
+
+  const addNewConvo = useCallback((recipientId, message) => {
+      let newCconversations = conversations.map((convo) => {
+        const convoCopy = {...convo, messages: [...convo.messages]};
+        if (convoCopy.otherUser.id === recipientId) {
+          convoCopy.messages.push(message);
+          convoCopy.latestMessageText = message.text;
+          convoCopy.id = message.conversationId;
         }
+        return convoCopy
       });
-      setConversations(conversations);
+      // sort conversations by latest message
+      newCconversations = sortConversations(newCconversations);
+      setConversations(newCconversations);
     },
     [setConversations, conversations],
   );
-  const addMessageToConversation = useCallback(
-    (data) => {
+  const addMessageToConversation = useCallback((data) => {
       // if sender isn't null, that means the message needs to be put in a brand new convo
-      const { message, sender = null } = data;
+      const {message, sender = null} = data;
       if (sender !== null) {
         const newConvo = {
           id: message.conversationId,
@@ -104,14 +114,17 @@ const Home = ({ user, logout }) => {
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
       }
-
-      conversations.forEach((convo) => {
-        if (convo.id === message.conversationId) {
-          convo.messages.push(message);
-          convo.latestMessageText = message.text;
+      let newConversations = conversations.map((convo) => {
+        const convoCopy = {...convo, messages: [...convo.messages]};
+        if (convoCopy.id === message.conversationId) {
+          convoCopy.messages.push(message);
+          convoCopy.latestMessageText = message.text;
         }
-      });
-      setConversations(conversations);
+        return convoCopy;
+      })
+      // sort conversations by latest message
+      newConversations = sortConversations(newConversations);
+      setConversations(newConversations);
     },
     [setConversations, conversations],
   );
@@ -124,8 +137,8 @@ const Home = ({ user, logout }) => {
     setConversations((prev) =>
       prev.map((convo) => {
         if (convo.otherUser.id === id) {
-          const convoCopy = { ...convo };
-          convoCopy.otherUser = { ...convoCopy.otherUser, online: true };
+          const convoCopy = {...convo};
+          convoCopy.otherUser = {...convoCopy.otherUser, online: true};
           return convoCopy;
         } else {
           return convo;
@@ -138,8 +151,8 @@ const Home = ({ user, logout }) => {
     setConversations((prev) =>
       prev.map((convo) => {
         if (convo.otherUser.id === id) {
-          const convoCopy = { ...convo };
-          convoCopy.otherUser = { ...convoCopy.otherUser, online: false };
+          const convoCopy = {...convo};
+          convoCopy.otherUser = {...convoCopy.otherUser, online: false};
           return convoCopy;
         } else {
           return convo;
@@ -181,7 +194,8 @@ const Home = ({ user, logout }) => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const { data } = await axios.get("/api/conversations");
+        const {data} = await axios.get("/api/conversations");
+        data.forEach(e => e.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
         setConversations(data);
       } catch (error) {
         console.error(error);
@@ -202,7 +216,7 @@ const Home = ({ user, logout }) => {
     <>
       <Button onClick={handleLogout}>Logout</Button>
       <Grid container component="main" className={classes.root}>
-        <CssBaseline />
+        <CssBaseline/>
         <SidebarContainer
           conversations={conversations}
           user={user}
