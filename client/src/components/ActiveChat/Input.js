@@ -4,6 +4,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import smileSVG from '../../assets/images/ic-smiles.svg';
 import fileSVG from '../../assets/images/ic-file.svg';
 import {UploadImageDialog} from "../Dialog";
+import axios from "axios";
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -36,6 +37,7 @@ const Input = ({otherUser, conversationId, user, postMessage}) => {
   const classes = useStyles();
   const [text, setText] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const instance = axios.create()
 
   const handleChange = (event) => {
     setText(event.target.value);
@@ -71,21 +73,15 @@ const Input = ({otherUser, conversationId, user, postMessage}) => {
     for (let i = 0; i < event.target.files.length; i++) {
       const formData = new FormData();
       formData.append('file', event.target.files[i]);
+      formData.append('cloud_name', 'dkei6g0z1');
       formData.append('upload_preset', 'my-upload-images');
-      uploads.push(fetch(post_url, {
-          method: 'POST',
-          body: formData,
-        },
-      ));
+      uploads.push(instance.post(post_url, formData,));
     }
-    const attachments = await Promise.all(uploads.map(async (upload) => {
-      let resp = await upload;
-      let data = await resp.json()
-      return data['secure_url'];
-    }));
-
+    const uploadResp = await Promise.all(uploads);
+    const attachments = uploadResp.map(resp => resp.data.secure_url);
+    
     const reqBody = {
-      text: '',
+      text: text,
       recipientId: otherUser.id,
       conversationId,
       sender: conversationId ? null : user,

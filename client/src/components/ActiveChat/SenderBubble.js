@@ -34,7 +34,7 @@ const SenderBubble = ({time, text, attachments}) => {
     <Box className={classes.root}>
       <Typography className={classes.date}>{time}</Typography>
       {attachments && attachments.length > 0 ? (
-        <ImageBubble user={'sender'} attachments={attachments}/>
+        <ImageBubble user={'sender'} text={text} attachments={attachments}/>
       ) : (
         <Box className={classes.bubble}>
           <Typography className={classes.text}>{text}</Typography>

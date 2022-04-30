@@ -1,10 +1,11 @@
-import React, {useState} from "react";
+import React, {useState, useRef} from "react";
 import {Dialog, DialogContent, DialogTitle, IconButton} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import imgPlaceholder from "../../assets/images/img-placeholder.jpg";
 
-
 const UploadImageDialog = (props) => {
+  const uploadRef = useRef(null);
+
   const styles = {
     image_placeholder: {
       width: '80%',
@@ -30,9 +31,9 @@ const UploadImageDialog = (props) => {
       </IconButton>
       <DialogContent>
         <img src={imgPlaceholder} alt="img" style={styles.image_placeholder} onClick={() => {
-          document.getElementById('uploadImg').click();
+          uploadRef.current.click();
         }}/>
-        <input type="file" name="images" id="uploadImg" hidden onChange={props.handleFile} multiple/>
+        <input type="file" name="images" id="uploadImg" hidden onChange={props.handleFile} multiple ref={uploadRef}/>
       </DialogContent>
     </Dialog>
   )
