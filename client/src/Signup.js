@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import {
-  Grid,
-  Box,
-  Typography,
-  Button,
-  FormControl,
-  TextField,
-  FormHelperText,
-} from '@material-ui/core';
+import React, {useState, useEffect} from 'react';
+import {useHistory} from 'react-router-dom';
+import {Box, Grid,} from "@mui/material";
+import {FormHeader, SideBanner} from "./components";
+import {SignupForm} from "./components/Signup";
 
-const Signup = ({ user, register }) => {
+const Signup = ({user, register}) => {
   const history = useHistory();
 
   const [formErrorMessage, setFormErrorMessage] = useState({});
+  const [reminderText, setReminderText] = useState('Already have an account?');
+  const [loginButtonText, setLoginButtonText] = useState('Login');
+  const [loginLink, setLoginLink] = useState('/login');
 
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -25,10 +22,10 @@ const Signup = ({ user, register }) => {
     const confirmPassword = formElements.confirmPassword.value;
 
     if (password !== confirmPassword) {
-      setFormErrorMessage({ confirmPassword: 'Passwords must match' });
+      setFormErrorMessage({confirmPassword: 'Passwords must match'});
       return;
     }
-    await register({ username, email, password });
+    await register({username, email, password});
   };
 
   useEffect(() => {
@@ -36,76 +33,19 @@ const Signup = ({ user, register }) => {
   }, [user, history]);
 
   return (
-    <Grid container justifyContent="center">
-      <Box>
-        <Grid container item>
-          <Typography>Need to log in?</Typography>
-          <Link href="/login" to="/login">
-            <Button>Login</Button>
-          </Link>
+    <Box>
+      <Grid container>
+        <Grid item md={5}> <SideBanner/> </Grid>
+        <Grid item xs={12} md={7}>
+          <FormHeader
+            text={reminderText}
+            buttonText={loginButtonText}
+            href={loginLink}
+            buttonStyle={{width: 140}}/>
+          <SignupForm handleRegister={handleRegister} formErrorMessage={formErrorMessage}/>
         </Grid>
-        <form onSubmit={handleRegister}>
-          <Grid>
-            <Grid>
-              <FormControl>
-                <TextField
-                  aria-label="username"
-                  label="Username"
-                  name="username"
-                  type="text"
-                  required
-                />
-              </FormControl>
-            </Grid>
-            <Grid>
-              <FormControl>
-                <TextField
-                  label="E-mail address"
-                  aria-label="e-mail address"
-                  type="email"
-                  name="email"
-                  required
-                />
-              </FormControl>
-            </Grid>
-            <Grid>
-              <FormControl error={!!formErrorMessage.confirmPassword}>
-                <TextField
-                  aria-label="password"
-                  label="Password"
-                  type="password"
-                  inputProps={{ minLength: 6 }}
-                  name="password"
-                  required
-                />
-                <FormHelperText>
-                  {formErrorMessage.confirmPassword}
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-            <Grid>
-              <FormControl error={!!formErrorMessage.confirmPassword}>
-                <TextField
-                  label="Confirm Password"
-                  aria-label="confirm password"
-                  type="password"
-                  inputProps={{ minLength: 6 }}
-                  name="confirmPassword"
-                  required
-                />
-                <FormHelperText>
-                  {formErrorMessage.confirmPassword}
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-            <Button type="submit" variant="contained" size="large">
-              Create
-            </Button>
-          </Grid>
-        </form>
-      </Box>
-    </Grid>
-  );
+      </Grid>
+    </Box>);
 };
 
 export default Signup;
