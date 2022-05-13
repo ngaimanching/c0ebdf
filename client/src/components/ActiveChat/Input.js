@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { FormControl, FilledInput } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import React, {useState} from 'react';
+import {FormControl, FilledInput} from '@material-ui/core';
+import {makeStyles} from '@material-ui/core/styles';
+import smileSVG from '../../assets/images/ic-smiles.svg';
+import fileSVG from '../../assets/images/ic-file.svg';
+import {UploadImageDialog} from "../Dialog";
+import axios from "axios";
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -13,11 +17,27 @@ const useStyles = makeStyles(() => ({
     borderRadius: 8,
     marginBottom: 20,
   },
+  smile_icon: {
+    position: 'absolute',
+    right: '11.33%',
+    width: 22,
+    height: 22,
+    marginTop: 24,
+  },
+  file_icon: {
+    position: 'absolute',
+    right: '5%',
+    width: 18,
+    height: 20.84,
+    marginTop: 25,
+  },
 }));
 
-const Input = ({ otherUser, conversationId, user, postMessage }) => {
+const Input = ({otherUser, conversationId, user, postMessage}) => {
   const classes = useStyles();
   const [text, setText] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
+  const instance = axios.create()
 
   const handleChange = (event) => {
     setText(event.target.value);
@@ -38,17 +58,54 @@ const Input = ({ otherUser, conversationId, user, postMessage }) => {
     setText('');
   };
 
+  const dialogOpen = () => {
+    setOpenDialog(true);
+  }
+
+  const dialogClose = () => {
+    setOpenDialog(false);
+  };
+
+  const handleFile = async (event) => {
+    dialogClose();
+    const post_url = 'https://api.cloudinary.com/v1_1/dkei6g0z1/image/upload'
+    const uploads = []
+    for (let i = 0; i < event.target.files.length; i++) {
+      const formData = new FormData();
+      formData.append('file', event.target.files[i]);
+      formData.append('cloud_name', 'dkei6g0z1');
+      formData.append('upload_preset', 'my-upload-images');
+      uploads.push(instance.post(post_url, formData,));
+    }
+    const uploadResp = await Promise.all(uploads);
+    const attachments = uploadResp.map(resp => resp.data.secure_url);
+    
+    const reqBody = {
+      text: text,
+      recipientId: otherUser.id,
+      conversationId,
+      sender: conversationId ? null : user,
+      attachments: attachments,
+    };
+    await postMessage(reqBody);
+    setText('');
+  };
+
+
   return (
     <form className={classes.root} onSubmit={handleSubmit}>
+      <UploadImageDialog open={openDialog} onClose={dialogClose} handleFile={handleFile}/>
       <FormControl fullWidth hiddenLabel>
         <FilledInput
-          classes={{ root: classes.input }}
+          classes={{root: classes.input}}
           disableUnderline
           placeholder="Type something..."
           value={text}
           name="text"
           onChange={handleChange}
         />
+        <img src={smileSVG} alt="smile" className={classes.smile_icon}/>
+        <img src={fileSVG} alt="file" className={classes.file_icon} onClick={dialogOpen}/>
       </FormControl>
     </form>
   );
